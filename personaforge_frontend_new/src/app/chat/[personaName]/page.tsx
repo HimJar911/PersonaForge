@@ -24,12 +24,25 @@ export default function ChatPage() {
       }
     }
 
-    const combined = [...Object.values(predefinedPersonas), ...localPersonas];
+    // ✅ Use Map to merge without duplicates
+    const combinedMap = new Map<string, Persona>();
+
+    Object.values(predefinedPersonas).forEach((p) =>
+      combinedMap.set(p.name, p)
+    );
+    localPersonas.forEach((p) => {
+      if (!combinedMap.has(p.name)) {
+        combinedMap.set(p.name, p);
+      }
+    });
+
+    const combined = Array.from(combinedMap.values());
     setAllPersonas(combined);
 
     const match = combined.find((p) => p.name === personaName);
     setPersona(match || null);
   };
+
 
   useEffect(() => {
     loadPersona();
@@ -67,11 +80,10 @@ Respond as yourself, staying in character.`;
           <a
             key={p.name}
             href={`/chat/${p.name}`}
-            className={`block px-3 py-2 rounded mb-2 ${
-              p.name === persona.name
+            className={`block px-3 py-2 rounded mb-2 ${p.name === persona.name
                 ? "bg-purple-700 text-white"
                 : "hover:bg-gray-800 text-slate-300"
-            }`}
+              }`}
           >
             {p.name}
           </a>
