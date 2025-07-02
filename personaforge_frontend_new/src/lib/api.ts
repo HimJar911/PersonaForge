@@ -17,7 +17,7 @@ export async function getPersonaMemory(personaName: string): Promise<string[]> {
   return data.facts || [];
 }
 
-export async function chatWithPersona(
+export async function chatWithPersona( 
   personaName: string,
   personaPrompt: string,
   userMessage: string

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchAllPersonaMemories } from "@/lib/api";
 import { predefinedPersonas } from "@/data/predefinedPersonas";
+import usePageRefreshOnFocus from "@/hooks/usePageRefreshOnFocus";
 
 interface Persona {
   name: string;
@@ -18,87 +19,97 @@ export default function PersonasPage() {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const router = useRouter();
 
-  useEffect(() => {
-    const loadPersonas = async () => {
-      try {
-        // Backend memory
-        const backendData = await fetchAllPersonaMemories();
-        const backendFormatted: Persona[] = Object.entries(backendData).map(
-          ([name, traits]) => ({
-            name,
-            role: "Unknown",
-            traits: traits as string[] | string,
-            style: "default",
-            goals: "",
-            summary: "",
-          })
-        );
+  const loadPersonas = async () => {
+    try {
+      // Backend memory
+      const backendData = await fetchAllPersonaMemories();
+      const backendFormatted: Persona[] = Object.entries(backendData).map(
+        ([name, traits]) => ({
+          name,
+          role: "Unknown",
+          traits: traits as string[] | string,
+          style: "default",
+          goals: "",
+          summary: "",
+        })
+      );
 
-        // Local storage
-        let localFormatted: Persona[] = [];
-        const localData = localStorage.getItem("personaforge_saved_personas");
-        if (localData) {
-          try {
-            localFormatted = JSON.parse(localData);
-          } catch {
-            console.warn("⚠️ Could not parse localStorage");
-          }
+      // Local storage
+      let localFormatted: Persona[] = [];
+      const localData = localStorage.getItem("personaforge_saved_personas");
+      if (localData) {
+        try {
+          localFormatted = JSON.parse(localData);
+        } catch {
+          console.warn("⚠️ Could not parse localStorage");
         }
-
-        // Predefined personas
-        const predefinedFormatted: Persona[] = [
-          {
-            ...predefinedPersonas.Raven,
-            style: "strategic",
-            goals: "Business mastery",
-            summary: "Sharp, tactical advisor for decision-making",
-          },
-          {
-            ...predefinedPersonas.Sage,
-            style: "wise",
-            goals: "Empathic life coaching",
-            summary: "A calm voice through emotional storms",
-          },
-          {
-            ...predefinedPersonas.Icarus,
-            style: "creative",
-            goals: "Push boundaries and explore ideas",
-            summary: "A visionary spark for creators and builders",
-          },
-          {
-            ...predefinedPersonas.Zenith,
-            style: "analytic",
-            goals: "Investigate, analyze, and conquer complexity",
-            summary: "Your research and strategy partner",
-          },
-        ];
-
-        // Merge all without duplicates
-        const all = [
-          ...predefinedFormatted,
-          ...localFormatted.filter(
-            (l) => !predefinedFormatted.find((p) => p.name === l.name)
-          ),
-          ...backendFormatted.filter(
-            (b) =>
-              !predefinedFormatted.find((p) => p.name === b.name) &&
-              !localFormatted.find((l) => l.name === b.name)
-          ),
-        ];
-
-        console.log("✅ Loaded predefined:", predefinedFormatted);
-
-        setPersonas(all);
-        if (!localStorage.getItem("personaforge_saved_personas")) {
-          localStorage.setItem("personaforge_saved_personas", JSON.stringify(all));
-        }
-      } catch (err) {
-        console.error("❌ Failed to load personas:", err);
       }
-    };
 
+      // Predefined personas
+      const predefinedFormatted: Persona[] = [
+        {
+          ...predefinedPersonas.Raven,
+          style: "strategic",
+          goals: "Business mastery",
+          summary: "Sharp, tactical advisor for decision-making",
+        },
+        {
+          ...predefinedPersonas.Sage,
+          style: "wise",
+          goals: "Empathic life coaching",
+          summary: "A calm voice through emotional storms",
+        },
+        {
+          ...predefinedPersonas.Icarus,
+          style: "creative",
+          goals: "Push boundaries and explore ideas",
+          summary: "A visionary spark for creators and builders",
+        },
+        {
+          ...predefinedPersonas.Zenith,
+          style: "analytic",
+          goals: "Investigate, analyze, and conquer complexity",
+          summary: "Your research and strategy partner",
+        },
+      ];
+
+      const all = [
+        ...predefinedFormatted,
+        ...localFormatted.filter((l) => !predefinedFormatted.find((p) => p.name === l.name)),
+        ...backendFormatted.filter(
+          (b) =>
+            !predefinedFormatted.find((p) => p.name === b.name) &&
+            !localFormatted.find((l) => l.name === b.name)
+        ),
+      ];
+
+      setPersonas(all);
+      if (!localStorage.getItem("personaforge_saved_personas")) {
+        localStorage.setItem("personaforge_saved_personas", JSON.stringify(all));
+      }
+    } catch (err) {
+      console.error("❌ Failed to load personas:", err);
+    }
+  };
+  usePageRefreshOnFocus(loadPersonas);
+
+  // 👇 Initial load on mount
+  useEffect(() => {
     loadPersonas();
   }, []);
+
+  // 👇 Reload on browser back / tab focus
+  // useEffect(() => {
+  //   const handleVisibilityChange = () => {
+  //     if (document.visibilityState === "visible") {
+  //       loadPersonas();
+  //     }
+  //   };
+
+  //   document.addEventListener("visibilitychange", handleVisibilityChange);
+  //   return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  // }, []);
+
 
   const deletePersona = (name: string) => {
     const updated = personas.filter((p) => p.name !== name);
