@@ -1,9 +1,9 @@
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+
 export async function forgePersona(name: string, role: string, traits: string) {
-  const res = await fetch("http://127.0.0.1:8000/forge", {
+  const res = await fetch(`${BASE_URL}/forge`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, role, traits }),
   });
 
@@ -12,7 +12,7 @@ export async function forgePersona(name: string, role: string, traits: string) {
 }
 
 export async function getPersonaMemory(personaName: string): Promise<string[]> {
-  const res = await fetch(`http://127.0.0.1:8000/memory/${personaName}`);
+  const res = await fetch(`${BASE_URL}/memory/${personaName}`);
   const data = await res.json();
   return data.facts || [];
 }
@@ -37,7 +37,7 @@ export async function chatWithPersona(
 
   const finalPrompt = personaPrompt + factText + ragText;
 
-  const res = await fetch("http://127.0.0.1:8000/chat", {
+  const res = await fetch(`${BASE_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -51,17 +51,11 @@ export async function chatWithPersona(
   const history = data.history;
   const lastMessage = history?.[history.length - 1];
 
-  if (!lastMessage || lastMessage.role !== "assistant") {
-    return "";
-  }
-
-  return lastMessage.content;
+  return lastMessage?.role === "assistant" ? lastMessage.content : "";
 }
 
-
-// Save new memory fact
 export async function saveFactToMemory(personaName: string, fact: string) {
-  const res = await fetch("http://127.0.0.1:8000/memory/store", {
+  const res = await fetch(`${BASE_URL}/memory/store`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ persona_name: personaName, fact }),
@@ -69,16 +63,16 @@ export async function saveFactToMemory(personaName: string, fact: string) {
   return res.json();
 }
 
-
 export async function storeMessageInRAG(personaName: string, message: string) {
-  await fetch("http://127.0.0.1:8000/rag/store", {
+  await fetch(`${BASE_URL}/rag/store`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ persona_name: personaName, message }),
   });
 }
+
 export async function searchMemoryInRAG(personaName: string, query: string): Promise<string[]> {
-  const res = await fetch("http://127.0.0.1:8000/rag/search", {
+  const res = await fetch(`${BASE_URL}/rag/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ persona_name: personaName, query }),
@@ -87,10 +81,9 @@ export async function searchMemoryInRAG(personaName: string, query: string): Pro
   const data = await res.json();
   return data.results || [];
 }
+
 export async function fetchAllPersonaMemories() {
-  const res = await fetch("http://127.0.0.1:8000/memory/all");
+  const res = await fetch(`${BASE_URL}/memory/all`);
   if (!res.ok) throw new Error("Failed to fetch persona memory");
   return res.json(); // returns an object like { "Raven": [facts], "Nova": [facts] }
 }
-
-
