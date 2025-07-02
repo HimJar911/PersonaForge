@@ -87,6 +87,9 @@ export default function PersonasPage() {
         ];
 
         setPersonas(all);
+        if (!localStorage.getItem("personaforge_saved_personas")) {
+          localStorage.setItem("personaforge_saved_personas", JSON.stringify(all));
+        }
       } catch (err) {
         console.error("❌ Failed to load personas:", err);
       }
