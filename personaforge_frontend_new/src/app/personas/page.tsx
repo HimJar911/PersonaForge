@@ -86,6 +86,8 @@ export default function PersonasPage() {
           ),
         ];
 
+        console.log("✅ Loaded predefined:", predefinedFormatted);
+
         setPersonas(all);
         if (!localStorage.getItem("personaforge_saved_personas")) {
           localStorage.setItem("personaforge_saved_personas", JSON.stringify(all));
